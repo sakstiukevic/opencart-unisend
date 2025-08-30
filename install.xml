@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<modification>
+  <name>Unisend Shipping</name>
+  <version>1.0.5</version>
+  <code>unisend</code>
+  <author>UNISEND</author>
+  <link>https://www.post.lt/</link>
+
+  <file path="admin/controller/common/column_left.php">
+        <operation>
+            <search><![CDATA[
+            return $this->load->view('common/column_left', $data);
+            ]]></search>
+            <add position="before"><![CDATA[
+                  $this->load->library('unisend_shipping/services/UnisendShippingOCMODService');
+                  $this->UnisendShippingOCMODService::addMenu($data, $this);
+            ]]></add>
+        </operation>
+  </file>
+
+    <file path="admin/view/template/sale/order_info.twig">
+        <operation>
+            <search>
+                <![CDATA[<div class="row">]]>
+            </search>
+            <add position="before">
+                <![CDATA[
+                    {% if unisendOrderInfoView %}
+                        {{ unisendOrderInfoView }}
+                    {% endif %}
+                ]]>
+            </add>
+        </operation>
+    </file>
+    <file path="admin/view/template/sale/order_info.tpl">
+        <operation>
+            <search>
+                <![CDATA[<div class="row">]]>
+            </search>
+            <add position="before">
+                <![CDATA[
+                    <?php if (isset($unisendOrderInfoView)) { ?>
+                        <?php echo $unisendOrderInfoView; ?>
+                    <?php } ?>
+                ]]>
+            </add>
+        </operation>
+    </file>
+  <file path="admin/controller/sale/order.php">
+    <operation>
+      <search><![CDATA[$this->response->setOutput($this->load->view('sale/order_info', $data));]]></search>
+      <add position="before">
+
+          <![CDATA[
+              $this->load->library('unisend_shipping/services/UnisendShippingOCMODService');
+              $this->UnisendShippingOCMODService::order($data, $this);
+          ]]>
+      </add>
+    </operation>
+  </file>
+  <file path="catalog/controller/checkout/checkout.php">
+    <operation>
+      <search><![CDATA[$products = $this->cart->getProducts();]]></search>
+      <add position="before"><![CDATA[
+      $this->load->library('unisend_shipping/services/UnisendShippingOCMODService');
+      $this->UnisendShippingOCMODService::checkout($this);
+      ]]></add>
+    </operation>
+  </file>
+  <file path="catalog/controller/onepagecheckout/checkout.php">
+    <operation>
+      <search><![CDATA[$products = $this->cart->getProducts();]]></search>
+      <add position="before"><![CDATA[
+      $this->load->library('unisend_shipping/services/UnisendShippingOCMODService');
+      $this->UnisendShippingOCMODService::checkout($this);
+      ]]></add>
+    </operation>
+  </file>
+  <file path="catalog/controller/supercheckout/supercheckout.php">
+    <operation>
+      <search><![CDATA[$this->language->load('supercheckout/supercheckout');]]></search>
+      <add position="before"><![CDATA[
+      $this->load->library('unisend_shipping/services/UnisendShippingOCMODService');
+      $this->UnisendShippingOCMODService::checkout($this);
+      ]]></add>
+    </operation>
+  </file>
+  <file path="catalog/controller/extension/mpcheckout/checkout.php">
+    <operation>
+      <search><![CDATA[$this->load->language('mpcheckout/checkout');]]></search>
+      <add position="before"><![CDATA[
+      $this->load->library('unisend_shipping/services/UnisendShippingOCMODService');
+      $this->UnisendShippingOCMODService::checkout($this);
+      ]]></add>
+    </operation>
+  </file>
+  <file path="catalog/controller/journal3/checkout.php">
+    <operation>
+      <search><![CDATA[$this->document->setTitle($this->journal3->get('checkoutTitle'));]]></search>
+      <add position="before"><![CDATA[
+      $this->load->library('unisend_shipping/services/UnisendShippingOCMODService');
+      $this->UnisendShippingOCMODService::checkout($this);
+      ]]></add>
+    </operation>
+  </file>
+</modification>
