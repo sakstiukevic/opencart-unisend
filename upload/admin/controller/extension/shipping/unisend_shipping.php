@@ -850,7 +850,7 @@ class ControllerExtensionShippingUnisendShipping extends Controller {
     private function registerEvents()
     {
         $this->loadEventModel();
-        $this->addEvent('unisend_activity_order_add_after', 'catalog/model/checkout/order/addOrderHistory/after', 'extension/shipping/unisend_shipping/afterOrderAdd');
+        $this->addEvent('unisend_activity_order_add_after', 'catalog/model/checkout/order/addOrder/after', 'extension/shipping/unisend_shipping/afterOrderAdd');
         $this->addEvent('unisend_header_after', 'admin/view/common/header/after', 'extension/shipping/unisend_shipping/afterHeader');
     }
 

@@ -55,6 +55,12 @@ class ControllerExtensionShippingUnisendShipping extends Controller {
                 $orderData['orderInfo'] = $this->toOrderInfo();
                 $orderData['unisend_selected_terminal_id'] = $_POST['terminalId'] ?? null;
                 $orderData['unisend_selected_terminal_name'] = $_POST['terminalName'] ?? null;
+                
+                // Store terminal selection in session for later use during order creation
+                if (!empty($orderData['unisend_selected_terminal_id']) && !empty($orderData['unisend_selected_terminal_name'])) {
+                    $this->session->data['unisend_selected_terminal_id'] = $orderData['unisend_selected_terminal_id'];
+                    $this->session->data['unisend_selected_terminal_name'] = $orderData['unisend_selected_terminal_name'];
+                }
                 $orderData['orderInfo']['size'] = 'M';//to skip real size validation
                 $parcelValidationRequest = UnisendParcelRequest::fromOrderData($orderData);
                 if ($parcelValidationRequest) {
@@ -216,7 +222,7 @@ class ControllerExtensionShippingUnisendShipping extends Controller {
         UnisendShippingContextHolder::load($this);
 
         if ($this->isNewOrderRequest()) {
-            $this->createNewOrder($route, $data);
+            $this->createNewOrder($route, $data, $output);
             return;
         }
         if ($this->isStatusChangeRequest()) {
@@ -242,10 +248,14 @@ class ControllerExtensionShippingUnisendShipping extends Controller {
         }
     }
 
-    private function createNewOrder(&$route, &$data)
+    private function createNewOrder(&$route, &$data, &$output = null)
     {
-        $orderId = $data[0];
-        $paymentStatusId = $data[1];
+        // Get order ID from output parameter (event hook passes it here)
+        $orderId = $output ?? $data[0] ?? null;
+        
+        if (!$orderId) {
+            return; // No valid order ID found
+        }
         $this->load->model('checkout/order');
         $order = $this->model_checkout_order->getOrder($orderId);
         if ($order && isset($order['shipping_code'])) {
@@ -254,6 +264,23 @@ class ControllerExtensionShippingUnisendShipping extends Controller {
                 $this->load->model('catalog/product');
 
                 $products = $this->cart->getProducts();
+                // Fallback: if cart is empty (common in payment callbacks), get products from order
+                if (empty($products)) {
+                    $this->load->model('checkout/order');
+                    $orderProducts = $this->model_checkout_order->getOrderProducts($orderId);
+                    $products = array_map(function($op) {
+                        return [
+                            'product_id' => $op['product_id'],
+                            'name' => $op['name'],
+                            'model' => $op['model'],
+                            'quantity' => $op['quantity'],
+                            'price' => $op['price'],
+                            'total' => $op['total'],
+                            'tax' => $op['tax'],
+                            'weight' => $op['weight']
+                        ];
+                    }, $orderProducts);
+                }
                 $orderData['products'] = $products;
 
                 $order['weight'] = UnisendShippingOrderService::getInstance()->getOrderWeight($orderData);
